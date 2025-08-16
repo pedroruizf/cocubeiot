@@ -7,7 +7,7 @@
 <meta http-equiv="content-type" content="text/html;  charset=utf-8" />
 <title>Paneles o dashboards | IoT + Microblocks + Cocube </title>
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-<meta name="author" content="CRG" />
+<meta name="author" content="Pedro Ruiz Fernández" />
 <link rel="license" type="text/html" href="http://creativecommons.org/licenses/by-sa/4.0/" />
 <meta name="generator" content="eXeLearning 2.9 - exelearning.net" />
 <!--[if lt IE 9]><script type="text/javascript" src="exe_html5.js"></script><![endif]-->
@@ -26,11 +26,12 @@
    <li><a href="servidor_mqtt.html" class="no-ch">Servidor MQTT</a></li>
    <li><a href="robot_iot_cocube.html" class="no-ch">Robot IoT (Cocube)</a></li>
    <li id="active"><a href="paneles_o_dashboards.html" class="active no-ch">Paneles o dashboards</a></li>
+   <li><a href="crditos.html" class="no-ch">Créditos</a></li>
 </ul>
 </nav>
 <div id='topPagination'>
 <nav class="pagination noprt">
-<a href="robot_iot_cocube.html" class="prev"><span><span>&laquo; </span>Anterior</span></a>
+<a href="robot_iot_cocube.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="crditos.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
 </nav>
 </div>
 <div id="main-wrapper">
@@ -65,13 +66,14 @@
 <div class="iDevice_inner">
 <div class="iDevice_content_wrapper">
 <div id="ta253_127_2" class="block iDevice_content">
-<div class="exe-text"><p>También podemos realizar páginas webs en forma de paneles o dashborads para mandar temas (topics) y valores o para recibir temas (topics) y valores del robot. En concreto esta ha sido realizada a través de Chat GPT.</p>
+<div class="exe-text"><p>También podemos realizar páginas webs en forma de paneles o dashboards para mandar temas (topics) y valores o para recibir temas (topics) y valores del robot. En concreto esta ha sido realizada a través de la IA <em>Gemini</em> de <em>Google</em>. En dicho panel al pulsar por ejemplo el botón adelante envía al servidor mqtt el tema adelante con valores separados por coma de velocidad y pasos que los coge de los casilleros correspondientes. Cuando le damos al botón ir a posición x,y al servidor se manda el tema posición con valores separados por coma posición x, posición y y velocidad tomados de los casilleros. Además tenemos una zona dónde se refleja el estado del robot y su posición y ángulo en un panel virtual simulando una alfombrilla (copad) de tamaño 300x200.</p>
 <p><cite><img src="panel_html.png" alt="dashboard" title="dashboard" width="800" height="781" /></cite></p>
 <p>Es necesario en el fichero html cambiar la ip por la del broker (servidor mqtt). Esta IP puede ser local (si estamos en intranet) o pública si nuestro broker es remoto. Lo haremos con un editor de texto plano y en concreto está en la línea 235 del código de la web.</p>
+<p><img src="html_configuracion.png" alt="html" title="html" width="803" height="116" /></p>
+<p>Vídeo de demostración de funcionamiento del sistema con broker remoto (no en red local):</p>
 <figure class="exe-figure exe-media position-center license-CC-BY-SA" style="width: 800px;"><iframe width="800" height="600" src="https://www.youtube.com/embed/rqcnorha1vA" allowfullscreen="allowfullscreen"></iframe>
 <figcaption class="figcaption"><span class="author">Pedro Ruiz</span>. <span class="title"><em>Cocube IoT</em></span> <span class="license"><span class="sep">(</span><a href="http://creativecommons.org/licenses/?lang=es" rel="license nofollow noopener" target="_blank" title="Creative Commons BY-SA">CC BY-SA</a><span class="sep">)</span></span></figcaption>
-</figure>
-<p></p></div>
+</figure></div>
 </div>
 </div>
 </div>
@@ -97,7 +99,7 @@
 </div>
 <div id='bottomPagination'>
 <nav class="pagination noprt">
-<a href="robot_iot_cocube.html" class="prev"><span><span>&laquo; </span>Anterior</span></a>
+<a href="robot_iot_cocube.html" class="prev"><span><span>&laquo; </span>Anterior</span></a> <span class="sep">| </span><a href="crditos.html" class="next"><span>Siguiente<span> &raquo;</span></span></a>
 </nav>
 </div>
 </div>
