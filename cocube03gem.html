@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control del Robot MQTT</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            gap: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #1877f2;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 200px;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            justify-items: center;
+            align-items: center;
+        }
+        .button-grid button, .single-button, #connect-btn { /* */
+            width: 100%;
+            height: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.2s;
+            margin-top: 10px; /* */
+        }
+        .button-grid button:hover, .single-button:hover, #connect-btn:hover { /* */
+            background-color: #45a049;
+        }
+        #btnAdelante { grid-column: 2 / 3; grid-row: 1 / 2; }
+        #btnAtras { grid-column: 2 / 3; grid-row: 2 / 3; }
+        #btnIzquierda { grid-column: 1 / 2; grid-row: 1 / 2; }
+        #btnDerecha { grid-column: 3 / 4; grid-row: 1 / 2; }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px 20px;
+            align-items: center;
+        }
+        .status-grid .label {
+            font-weight: bold;
+            text-align: right;
+        }
+        .status-grid .value {
+            font-family: "Courier New", Courier, monospace;
+            background-color: #eee;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        #connection-status {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+        }
+        .status-connected { background-color: #4CAF50; }
+        .status-disconnected { background-color: #f44336; }
+
+        /* */
+        #tablero {
+            width: 300px;
+            height: 200px;
+            border: 2px solid #333;
+            background-color: #f0f0f0;
+            position: relative; /* Clave para posicionar el robot dentro */
+            margin-top: 15px;
+        }
+        #robot-marker {
+            width: 12px;
+            height: 12px;
+            background-color: red;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            position: absolute;
+            /* Se centra el punto en la coordenada exacta con transform */
+            transform: translate(-50%, -50%); 
+            transition: top 0.5s ease, left 0.5s ease; /* Transición suave */
+        }
+        #direction-pointer {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 10px solid #000; /* Crea el triángulo que apunta hacia arriba */
+            position: absolute;
+            top: -10px; /* Posiciona el puntero arriba del centro del marcador */
+            left: 50%;
+            transform: translateX(-50%);
+            transition: transform 0.5s ease; /* Para una rotación suave */
+        }
+        
+        /* Estilos para la ventana de login */
+        #login-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 300px;
+        }
+        #login-modal h2 {
+            border-bottom: none;
+        }
+        #login-modal .input-group input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #connect-btn {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-modal">
+    <h2>Conexión al Robot MQTT</h2>
+    <div class="input-group">
+        <label for="mqtt-username">Nombre de Usuario:</label>
+        <input type="text" id="mqtt-username" value="anonimo">
+    </div>
+    <div class="input-group">
+        <label for="mqtt-password">Contraseña:</label>
+        <input type="password" id="mqtt-password" value="anonimo">
+    </div>
+    <button id="connect-btn">Conectar</button>
+</div>
+
+<div class="container" id="main-content" style="display: none;">
+    <div class="panel">
+        <h2>🎮 Panel de Control</h2>
+        <div class="input-group">
+            <label for="velocidad">Velocidad (0-50):</label>
+            <input type="number" id="velocidad" name="velocidad" min="0" max="50" value="25">
+        </div>
+        <div class="input-group">
+            <label for="pasos">Pasos:</label>
+            <input type="number" id="pasos" name="pasos" value="10">
+        </div>
+        <div class="input-group">
+            <label for="grados">Grados:</label>
+            <input type="number" id="grados" name="grados" value="90">
+        </div>
+        <div class="button-grid">
+            <button id="btnIzquierda">⬅️ Izquierda</button>
+            <button id="btnAdelante">⬆️ Adelante</button>
+            <button id="btnDerecha">➡️ Derecha</button>
+            <button id="btnAtras">⬇️ Atrás</button>
+        </div>
+        
+        <hr>
+        <div class="input-group">
+            <label for="posX">Posición X (0-300):</label>
+            <input type="number" id="posX" name="posX" min="0" max="300" value="150">
+        </div>
+        <div class="input-group">
+            <label for="posY">Posición Y (0-200):</label>
+            <input type="number" id="posY" name="posY" min="0" max="200" value="100">
+        </div>
+        <button id="btnPosicion" class="single-button">🎯 Ir a Posición (X,Y)</button>
+    </div>
+
+    <div class="panel">
+        <h2>🤖 Estado del Robot</h2>
+        <div id="connection-status" class="status-disconnected">Desconectado</div>
+        <div class="status-grid">
+            <div class="label">ID:</div><div class="value" id="display_id">---</div>
+            <div class="label">Batería:</div><div class="value" id="display_bateria">---</div>
+            <div class="label">Posición X:</div><div class="value" id="display_posx">---</div>
+            <div class="label">Posición Y:</div><div class="value" id="display_posy">---</div>
+            <div class="label">Dirección:</div><div class="value" id="display_direccion">---</div>
+            <div class="label">Sobre Alfombra:</div><div class="value" id="display_alfombra">---</div>
+        </div>
+
+        <div id="tablero">
+            <div id="robot-marker" style="left: 150px; top: 100px;">
+                <span id="direction-pointer"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // -----------------------------------------------------------------
+    //  ⚠️ CONFIGURACIÓN OBLIGATORIA ⚠️
+    // -----------------------------------------------------------------
+    const BROKER_URL = 'ws://213.194.129.165:9001'; 
+    const TOPICS_SUSCRIPCION = ['posx', 'posy', 'direccion', 'alfombra', 'id', 'bateria'];
+    // -----------------------------------------------------------------
+
+    // Obtener referencias a los elementos del DOM
+    const velocidadInput = document.getElementById('velocidad');
+    const pasosInput = document.getElementById('pasos');
+    const gradosInput = document.getElementById('grados');
+    const connectionStatusDiv = document.getElementById('connection-status');
+    const posXInput = document.getElementById('posX');
+    const posYInput = document.getElementById('posY');
+    const robotMarker = document.getElementById('robot-marker');
+    const directionPointer = document.getElementById('direction-pointer');
+    
+    // NUEVO: Referencias a los elementos del login
+    const loginModal = document.getElementById('login-modal');
+    const mainContent = document.getElementById('main-content');
+    const connectButton = document.getElementById('connect-btn');
+    const mqttUsernameInput = document.getElementById('mqtt-username');
+    const mqttPasswordInput = document.getElementById('mqtt-password');
+
+    let client; // Se declara la variable client globalmente
+
+    let currentX = 0;
+    let currentY = 0;
+
+    // Lógica para el botón de conexión
+    connectButton.addEventListener('click', () => {
+        const username = mqttUsernameInput.value;
+        const password = mqttPasswordInput.value;
+        
+        const options = {
+            username: username,
+            password: password,
+            connectTimeout: 4000
+        };
+
+        console.log(`Intentando conectar a ${BROKER_URL} con usuario ${username}...`);
+        client = mqtt.connect(BROKER_URL, options);
+        
+        client.on('connect', () => {
+            console.log('¡Conectado exitosamente al broker MQTT!');
+            connectionStatusDiv.textContent = 'Conectado';
+            connectionStatusDiv.className = 'status-connected';
+
+            // Ocultar la ventana de login y mostrar la interfaz principal
+            loginModal.style.display = 'none';
+            mainContent.style.display = 'flex';
+            
+            client.subscribe(TOPICS_SUSCRIPCION, (err) => {
+                if (!err) {
+                    console.log(`Suscrito a los topics: ${TOPICS_SUSCRIPCION.join(', ')}`);
+                } else {
+                    console.error('Error en la suscripción:', err);
+                }
+            });
+        });
+
+        client.on('message', (topic, payload) => {
+            const message = payload.toString();
+            console.log(`Mensaje recibido en topic '${topic}': ${message}`);
+
+            const displayElement = document.getElementById(`display_${topic}`);
+            if (displayElement) {
+                displayElement.textContent = message;
+            }
+            
+            if (topic === 'posx') {
+                currentX = parseInt(message, 10);
+                updateRobotPositionOnBoard();
+            } else if (topic === 'posy') {
+                currentY = parseInt(message, 10);
+                updateRobotPositionOnBoard();
+            } else if (topic === 'direccion') {
+                updateRobotDirection(parseInt(message, 10));
+            }
+        });
+
+        client.on('error', (err) => {
+            console.error('Error de conexión:', err);
+            connectionStatusDiv.textContent = 'Error de Conexión';
+            connectionStatusDiv.className = 'status-disconnected';
+            // Se puede mostrar un mensaje de error en la interfaz de login
+        });
+
+        client.on('close', () => {
+            console.log('Conexión MQTT cerrada.');
+            if (connectionStatusDiv.className !== 'status-connected') {
+                connectionStatusDiv.textContent = 'Desconectado';
+                connectionStatusDiv.className = 'status-disconnected';
+            }
+        });
+    });
+
+    function publishMessage(topic, message) {
+        if (client && client.connected) {
+            client.publish(topic, message, (err) => {
+                if (err) {
+                    console.error(`Error al publicar en '${topic}':`, err);
+                } else {
+                    console.log(`Mensaje '${message}' publicado en el topic '${topic}'`);
+                }
+            });
+        } else {
+            console.error('No se puede publicar. El cliente MQTT no está conectado.');
+            alert('Error: No se ha podido conectar al robot. Revisa la configuración y el estado del servidor.');
+        }
+    }
+
+    function updateRobotPositionOnBoard() {
+        if (robotMarker) {
+            const clampedX = Math.max(0, Math.min(300, currentX));
+            const clampedY = Math.max(0, Math.min(200, currentY));
+            robotMarker.style.left = `${clampedX}px`;
+            robotMarker.style.top = `${clampedY}px`;
+        }
+    }
+
+    function updateRobotDirection(degrees) {
+        if (directionPointer) {
+            directionPointer.style.transform = `translateX(-50%) rotate(${degrees}deg)`;
+        }
+    }
+    
+    document.getElementById('btnAdelante').addEventListener('click', () => {
+        const payload = `${velocidadInput.value},${pasosInput.value}`;
+        publishMessage('adelante', payload);
+    });
+
+    document.getElementById('btnAtras').addEventListener('click', () => {
+        const payload = `${velocidadInput.value},${pasosInput.value}`;
+        publishMessage('atras', payload);
+    });
+
+    document.getElementById('btnIzquierda').addEventListener('click', () => {
+        const payload = `${velocidadInput.value},${gradosInput.value}`;
+        publishMessage('izquierda', payload);
+    });
+    
+    document.getElementById('btnDerecha').addEventListener('click', () => {
+        const payload = `${velocidadInput.value},${gradosInput.value}`;
+        publishMessage('derecha', payload);
+    });
+
+    document.getElementById('btnPosicion').addEventListener('click', () => {
+        const payload = `${posXInput.value},${posYInput.value},${velocidadInput.value}`;
+        publishMessage('posicion', payload);
+    });
+</script>
+
+</body>
+</html>
